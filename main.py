@@ -4,242 +4,331 @@ import keyboard
 import time
 import threading
 import pyperclip
+import json
+import os
 
 
-class EditPhrasesDialog(simpledialog.Dialog):
-    def __init__(self, parent, title, name, hotkey, phrases):
-        self.p_name = name
-        self.p_hotkey = hotkey
-        self.p_phrases = list(phrases) + [""] * (4 - len(phrases))
-        super().__init__(parent, title)
+class h1(simpledialog.Dialog):
+    def __init__(self, p, t, n, h, ph):
+        self.n1 = n
+        self.h1 = h
+        self.p1 = list(ph) + [""] * (4 - len(ph))
+        super().__init__(p, t)
 
-    def body(self, master):
-        ttk.Label(master, text="Название действия:").grid(row=0, column=0, sticky="w", pady=2)
-        self.name_entry = ttk.Entry(master, width=40)
-        self.name_entry.insert(0, self.p_name)
-        self.name_entry.grid(row=0, column=1, pady=2, padx=5)
+    def body(self, m):
+        ttk.Label(m, text="Название:").grid(row=0, column=0, sticky="w", pady=2)
+        self.e1 = ttk.Entry(m, width=40)
+        self.e1.insert(0, self.n1)
+        self.e1.grid(row=0, column=1, pady=2, padx=5)
 
-        ttk.Label(master, text="Горячая клавиша:").grid(row=1, column=0, sticky="w", pady=2)
-        self.hk_entry = ttk.Entry(master, width=15)
-        self.hk_entry.insert(0, self.p_hotkey)
-        self.hk_entry.grid(row=1, column=1, pady=2, padx=5, sticky="w")
+        ttk.Label(m, text="Горячая клавиша:").grid(row=1, column=0, sticky="w", pady=2)
+        self.e2 = ttk.Entry(m, width=20)
+        self.e2.insert(0, self.h1)
+        self.e2.grid(row=1, column=1, pady=2, padx=5, sticky="w")
+        ttk.Label(m, text="(кликни и нажми клавишу)", font=("Arial", 8)).grid(row=2, column=1, sticky="w", padx=5)
 
-        ttk.Label(master, text="RP отыгровка (строки):", font=("Arial", 9, "bold")).grid(row=2, column=0, columnspan=2,
-                                                                                         sticky="w", pady=(10, 2))
+        self.e2.bind("<Button-1>", self.r1)
 
-        self.phrase_entries = []
+        ttk.Label(m, text="Фразы:", font=("Arial", 9, "bold")).grid(row=3, column=0, columnspan=2, sticky="w",
+                                                                    pady=(10, 2))
+
+        self.f1 = []
         for i in range(4):
-            ttk.Label(master, text=f"Стр {i + 1}:").grid(row=3 + i, column=0, sticky="w", pady=2)
-            entry = ttk.Entry(master, width=40)
-            entry.insert(0, self.p_phrases[i])
-            entry.grid(row=3 + i, column=1, pady=2, padx=5)
-            self.phrase_entries.append(entry)
-        return self.name_entry
+            ttk.Label(m, text=f"{i + 1}:").grid(row=4 + i, column=0, sticky="w", pady=2)
+            e = ttk.Entry(m, width=40)
+            e.insert(0, self.p1[i])
+            e.grid(row=4 + i, column=1, pady=2, padx=5)
+            self.f1.append(e)
+        return self.e1
+
+    def r1(self, e):
+        def w1():
+            ev = keyboard.read_event(suppress=False)
+            if ev.event_type == keyboard.KEY_DOWN:
+                self.e2.delete(0, tk.END)
+                self.e2.insert(0, ev.name)
+
+        threading.Thread(target=w1, daemon=True).start()
+        return "break"
 
     def apply(self):
         self.result = {
-            "name": self.name_entry.get().strip() or "Без названия",
-            "hotkey": self.hk_entry.get().strip(),
-            "phrases": [e.get().strip() for e in self.phrase_entries if e.get().strip()]
+            "name": self.e1.get().strip() or "Без названия",
+            "hotkey": self.e2.get().strip(),
+            "phrases": [e.get().strip() for e in self.f1 if e.get().strip()]
         }
 
 
-class RPBinderPRO:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("ФСБ | beta v0.1")
-        self.root.geometry("450x550")
-        self.root.resizable(False, False)
+class app:
+    def __init__(self, r):
+        self.r = r
+        self.r.title("ФСБ | v2.0")
+        self.r.geometry("500x600")
+        self.r.resizable(False, False)
 
-        self.is_running = False
-        self.active_hotkeys = []
+        self.f1 = "binds.json"
+        self.i1 = False
+        self.h2 = []
 
-        self.cards = [
-            {"name": "Задержание", "desc": "Наручники и залом рук", "hotkey": "F4",
+        self.c1 = self.l1()
+        self.c2()
+
+        self.r.protocol("WM_DELETE_WINDOW", self.s1)
+
+    def l1(self):
+        if os.path.exists(self.f1):
+            try:
+                with open(self.f1, 'r', encoding='utf-8') as f:
+                    d = json.load(f)
+                    self.d1 = d.get('cd', "0.3")
+                    self.d2 = d.get('rd', "1.2")
+                    return d.get('cards', self.d3())
+            except:
+                return self.d3()
+        return self.d3()
+
+    def d3(self):
+        self.d1 = "0.3"
+        self.d2 = "1.2"
+        return [
+            {"name": "Задержание", "desc": "Наручники", "hotkey": "f4",
              "phrases": ["Я достал наручники с пояса", "Я задержал человека напротив",
                          "Я заломал руки человеку напротив", "Я повел человека напротив за собой"]},
-            {"name": "Посадка в авто", "desc": "Посадить в машину", "hotkey": "F5",
+            {"name": "Посадка", "desc": "В машину", "hotkey": "f5",
              "phrases": ["Я открыл дверь автомобиля", "Я посадил задержанного", "Я захлопнул дверь",
-                         "Подозреваемый в машине"]},
-            {"name": "Обыск", "desc": "Поиск предметов", "hotkey": "F6",
+                         "!do Подозреваемый в машине"]},
+            {"name": "Обыск", "desc": "Поиск", "hotkey": "f6",
              "phrases": ["Я надел перчатки", "Я провел руками по карманам", "Я изъял запрещенные предметы",
-                         "Обыск завершен"]},
-            {"name": "Арест", "desc": "Передача в КПЗ", "hotkey": "F7",
-             "phrases": ["Я открыл камеру", "Я завел задержанного", "Я закрыл дверь камеры", "Гражданин арестован"]}
+                         "!do Обыск завершен"]},
+            {"name": "Арест", "desc": "КПЗ", "hotkey": "f7",
+             "phrases": ["Я открыл камеру", "Я завел задержанного", "Я закрыл дверь камеры", "!do Гражданин арестован"]}
         ]
 
-        self.create_widgets()
-
-    def create_widgets(self):
-        top_frame = ttk.Frame(self.root, padding=8)
-        top_frame.pack(fill="x")
-
-        ttk.Label(top_frame, text="Задержка чата:").pack(side="left")
-        self.delay_entry = ttk.Entry(top_frame, width=5)
-        self.delay_entry.insert(0, "0.3")
-        self.delay_entry.pack(side="left", padx=3)
-
-        ttk.Label(top_frame, text="Меж строк:").pack(side="left", padx=(8, 3))
-        self.row_delay_entry = ttk.Entry(top_frame, width=5)
-        self.row_delay_entry.insert(0, "1.2")
-        self.row_delay_entry.pack(side="left")
-
-        self.add_btn = ttk.Button(top_frame, text="+ Добавить бинд", command=self.add_new_card)
-        self.add_btn.pack(side="right")
-
-        self.canvas_frame = ttk.Frame(self.root, padding=5)
-        self.canvas_frame.pack(fill="both", expand=True)
-
-        self.canvas = tk.Canvas(self.canvas_frame, highlightthickness=0)
-        self.scrollable_frame = ttk.Frame(self.canvas)
-        self.scrollable_frame.bind(
-            "<Configure>",
-            lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all"))
-        )
-
-        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw", width=440)
-        self.canvas.pack(side="left", fill="both", expand=True)
-
-        self.canvas.bind_all("<MouseWheel>", lambda e: self.canvas.yview_scroll(int(-1 * (e.delta / 120)), "units"))
-
-        bottom_frame = ttk.Frame(self.root, padding=10, relief="raised")
-        bottom_frame.pack(fill="x", side="bottom")
-
-        self.status_label = ttk.Label(bottom_frame, text="Статус: Выключен", font=("Arial", 10, "bold"),
-                                      foreground="red")
-        self.status_label.pack(side="left", pady=5)
-
-        self.start_btn = ttk.Button(bottom_frame, text="ВКЛЮЧИТЬ БИНДЕР", command=self.toggle_binder, width=20)
-        self.start_btn.pack(side="right")
-
-        self.render_cards()
-
-    def render_cards(self):
-        for widget in self.scrollable_frame.winfo_children():
-            widget.destroy()
-
-        for idx, card in enumerate(self.cards):
-            card_box = ttk.LabelFrame(self.scrollable_frame, text=f" [{card['hotkey'] or 'НЕТ'}] ", padding=8)
-            card_box.pack(fill="x", padx=5, pady=5)
-
-            text_frame = ttk.Frame(card_box)
-            text_frame.pack(side="left", fill="both", expand=True)
-
-            title_lbl = ttk.Label(text_frame, text=card["name"], font=("Arial", 10, "bold"))
-            title_lbl.pack(anchor="w")
-
-            desc_text = card["desc"] if card["desc"] else f"Строк: {len(card['phrases'])}"
-            desc_lbl = ttk.Label(text_frame, text=desc_text, font=("Arial", 8), foreground="gray")
-            desc_lbl.pack(anchor="w", pady=(2, 0))
-
-            btn_frame = ttk.Frame(card_box)
-            btn_frame.pack(side="right", fill="y")
-
-            edit_btn = ttk.Button(btn_frame, text="⚙ Редактировать", width=16, command=lambda i=idx: self.edit_card(i))
-            edit_btn.pack(side="top", pady=2)
-
-            del_btn = ttk.Button(btn_frame, text="❌ Удалить", width=16, command=lambda i=idx: self.delete_card(i))
-            del_btn.pack(side="bottom", pady=2)
-
-    def add_new_card(self):
-        dialog = EditPhrasesDialog(self.root, "Создание нового бинда", "Новое действие", "", ["", "", "", ""])
-        if dialog.result:
-            res = dialog.result
-            new_card = {
-                "name": res["name"],
-                "desc": "Пользовательский бинд",
-                "hotkey": res["hotkey"],
-                "phrases": res["phrases"]
+    def s1(self):
+        try:
+            d = {
+                'cards': self.c1,
+                'cd': self.e3.get() if hasattr(self, 'e3') else "0.3",
+                'rd': self.e4.get() if hasattr(self, 'e4') else "1.2"
             }
-            self.cards.append(new_card)
-            self.render_cards()
-            if self.is_running:
-                self.restart_hotkeys()
+            with open(self.f1, 'w', encoding='utf-8') as f:
+                json.dump(d, f, ensure_ascii=False, indent=2)
+        except:
+            pass
+        self.r.destroy()
 
-    def edit_card(self, idx):
-        card = self.cards[idx]
-        dialog = EditPhrasesDialog(self.root, f"Настройка: {card['name']}", card["name"], card["hotkey"],
-                                   card["phrases"])
-        if dialog.result:
-            res = dialog.result
-            self.cards[idx]["name"] = res["name"]
-            self.cards[idx]["hotkey"] = res["hotkey"]
-            self.cards[idx]["phrases"] = res["phrases"]
-            self.cards[idx]["desc"] = "Изменен пользователем"
-            self.render_cards()
-            if self.is_running:
-                self.restart_hotkeys()
+    def c2(self):
+        t1 = ttk.Frame(self.r, padding=8)
+        t1.pack(fill="x")
 
-    def delete_card(self, idx):
-        if messagebox.askyesno("Удаление", f"Вы уверены, что хотите удалить '{self.cards[idx]['name']}'?"):
-            self.cards.pop(idx)
-            self.render_cards()
-            if self.is_running:
-                self.restart_hotkeys()
+        ttk.Label(t1, text="Задержка:").pack(side="left")
+        self.e3 = ttk.Entry(t1, width=6)
+        self.e3.insert(0, self.d1)
+        self.e3.pack(side="left", padx=3)
 
-    def toggle_binder(self):
-        if not self.is_running:
-            self.is_running = True
-            self.status_label.config(text="Статус: АКТИВЕН", foreground="green")
-            self.start_btn.config(text="ОСТАНОВИТЬ")
-            self.restart_hotkeys()
-        else:
-            self.is_running = False
-            self.status_label.config(text="Статус: Выключен", foreground="red")
-            self.start_btn.config(text="ВКЛЮЧИТЬ БИНДЕР")
-            self.clear_hotkeys()
+        ttk.Label(t1, text="Меж строк:").pack(side="left", padx=(8, 3))
+        self.e4 = ttk.Entry(t1, width=6)
+        self.e4.insert(0, self.d2)
+        self.e4.pack(side="left")
 
-    def clear_hotkeys(self):
-        for hk in self.active_hotkeys:
+        b1 = ttk.Frame(t1)
+        b1.pack(side="right")
+
+        self.b2 = ttk.Button(b1, text="+ Бинд", command=self.a1, width=8)
+        self.b2.pack(side="left", padx=2)
+
+        self.b3 = ttk.Button(b1, text="💾", command=self.s1, width=3)
+        self.b3.pack(side="left", padx=2)
+
+        cf = ttk.Frame(self.r, padding=5)
+        cf.pack(fill="both", expand=True)
+
+        self.cv = tk.Canvas(cf, highlightthickness=0)
+        self.sf = ttk.Frame(self.cv)
+        self.sf.bind("<Configure>", lambda e: self.cv.configure(scrollregion=self.cv.bbox("all")))
+
+        self.cv.create_window((0, 0), window=self.sf, anchor="nw", width=480)
+        self.cv.pack(side="left", fill="both", expand=True)
+
+        def on_mw(e):
+            if self.sf.winfo_reqheight() > self.cv.winfo_height():
+                self.cv.yview_scroll(int(-1 * (e.delta / 120)), "units")
+
+        self.cv.bind_all("<MouseWheel>", on_mw)
+
+        bf = ttk.Frame(self.r, padding=10, relief="raised")
+        bf.pack(fill="x", side="bottom")
+
+        self.l1 = ttk.Label(bf, text="Статус: Выкл", font=("Arial", 10, "bold"), foreground="red")
+        self.l1.pack(side="left", pady=5)
+
+        bb = ttk.Frame(bf)
+        bb.pack(side="right")
+
+        self.b4 = ttk.Button(bb, text="Экспорт", command=self.e5, width=8)
+        self.b4.pack(side="left", padx=2)
+
+        self.b5 = ttk.Button(bb, text="Импорт", command=self.i2, width=8)
+        self.b5.pack(side="left", padx=2)
+
+        self.b6 = ttk.Button(bb, text="ВКЛ", command=self.t1, width=10)
+        self.b6.pack(side="left", padx=2)
+
+        self.r1()
+
+    def e5(self):
+        from tkinter import filedialog
+        f = filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("JSON", "*.json")])
+        if f:
             try:
-                keyboard.remove_hotkey(hk)
+                d = {'cards': self.c1, 'cd': self.e3.get(), 'rd': self.e4.get()}
+                with open(f, 'w', encoding='utf-8') as fp:
+                    json.dump(d, fp, ensure_ascii=False, indent=2)
+                messagebox.showinfo("Успех", f"Сохранено")
+            except Exception as er:
+                messagebox.showerror("Ошибка", str(er))
+
+    def i2(self):
+        from tkinter import filedialog
+        f = filedialog.askopenfilename(filetypes=[("JSON", "*.json")])
+        if f:
+            try:
+                with open(f, 'r', encoding='utf-8') as fp:
+                    d = json.load(fp)
+                self.c1 = d.get('cards', self.c1)
+                self.e3.delete(0, tk.END)
+                self.e3.insert(0, d.get('cd', "0.3"))
+                self.e4.delete(0, tk.END)
+                self.e4.insert(0, d.get('rd', "1.2"))
+                self.r1()
+                if self.i1:
+                    self.r2()
+                messagebox.showinfo("Успех", "Импорт выполнен")
+            except Exception as er:
+                messagebox.showerror("Ошибка", str(er))
+
+    def r1(self):
+        for w in self.sf.winfo_children():
+            w.destroy()
+
+        if not self.c1:
+            l = ttk.Label(self.sf, text="Нет биндов", font=("Arial", 12))
+            l.pack(pady=50)
+            return
+
+        for i, c in enumerate(self.c1):
+            b = ttk.LabelFrame(self.sf, text=f" [{c['hotkey'] or 'НЕТ'}] ", padding=8)
+            b.pack(fill="x", padx=5, pady=5)
+
+            tf = ttk.Frame(b)
+            tf.pack(side="left", fill="both", expand=True)
+
+            tl = ttk.Label(tf, text=c["name"], font=("Arial", 10, "bold"))
+            tl.pack(anchor="w")
+
+            dl = ttk.Label(tf, text=c["desc"] if c["desc"] else f"{len(c['phrases'])} фраз",
+                           font=("Arial", 8), foreground="gray")
+            dl.pack(anchor="w", pady=(2, 0))
+
+            bf = ttk.Frame(b)
+            bf.pack(side="right", fill="y")
+
+            eb = ttk.Button(bf, text="Ред", width=8, command=lambda x=i: self.e6(x))
+            eb.pack(side="top", pady=2)
+
+            db = ttk.Button(bf, text="Удал", width=8, command=lambda x=i: self.d4(x))
+            db.pack(side="bottom", pady=2)
+
+    def a1(self):
+        d = h1(self.r, "Новый бинд", "Новое действие", "", ["", "", "", ""])
+        if d.result:
+            r = d.result
+            n = {"name": r["name"], "desc": "Новый", "hotkey": r["hotkey"], "phrases": r["phrases"]}
+            self.c1.append(n)
+            self.r1()
+            if self.i1:
+                self.r2()
+
+    def e6(self, i):
+        c = self.c1[i]
+        d = h1(self.r, f"Правка", c["name"], c["hotkey"], c["phrases"])
+        if d.result:
+            r = d.result
+            self.c1[i]["name"] = r["name"]
+            self.c1[i]["hotkey"] = r["hotkey"]
+            self.c1[i]["phrases"] = r["phrases"]
+            self.c1[i]["desc"] = "Изменен"
+            self.r1()
+            if self.i1:
+                self.r2()
+
+    def d4(self, i):
+        if messagebox.askyesno("Удаление", f"Удалить '{self.c1[i]['name']}'?"):
+            self.c1.pop(i)
+            self.r1()
+            if self.i1:
+                self.r2()
+
+    def t1(self):
+        if not self.i1:
+            self.i1 = True
+            self.l1.config(text="Статус: АКТИВЕН", foreground="green")
+            self.b6.config(text="СТОП")
+            self.r2()
+        else:
+            self.i1 = False
+            self.l1.config(text="Статус: Выкл", foreground="red")
+            self.b6.config(text="ВКЛ")
+            self.c3()
+
+    def c3(self):
+        for h in self.h2:
+            try:
+                keyboard.remove_hotkey(h)
             except:
                 pass
-        self.active_hotkeys.clear()
+        self.h2.clear()
 
-    def restart_hotkeys(self):
-        self.clear_hotkeys()
-        for card in self.cards:
-            hk = card["hotkey"].strip()
+    def r2(self):
+        self.c3()
+        for c in self.c1:
+            hk = c["hotkey"].strip()
             if hk:
                 try:
-                    hook = keyboard.add_hotkey(hk, lambda c=card: self.play_macro(c))
-                    self.active_hotkeys.append(hook)
+                    hook = keyboard.add_hotkey(hk, lambda x=c: self.p1(x))
+                    self.h2.append(hook)
                 except:
                     pass
 
-    def play_macro(self, card):
-        threading.Thread(target=self._execute_typing, args=(card,)).start()
+    def p1(self, c):
+        threading.Thread(target=self.e7, args=(c,)).start()
 
-    def _execute_typing(self, card):
+    def e7(self, c):
         try:
-            chat_delay = float(self.delay_entry.get())
-            row_delay = float(self.row_delay_entry.get())
-        except ValueError:
-            chat_delay = 0.3
-            row_delay = 1.2
+            cd = float(self.e3.get())
+            rd = float(self.e4.get())
+        except:
+            cd = 0.3
+            rd = 1.2
 
-        phrases = [p for p in card["phrases"] if p.strip()]
-        old_clipboard = pyperclip.paste()
+        ph = [p for p in c["phrases"] if p.strip()]
+        oc = pyperclip.paste()
 
-        for phrase in phrases:
-            if not self.is_running:
+        for p in ph:
+            if not self.i1:
                 break
-
-            pyperclip.copy(phrase)
+            pyperclip.copy(p)
             keyboard.send("/")
-            time.sleep(chat_delay)
-
+            time.sleep(cd)
             keyboard.send("ctrl+v")
             time.sleep(0.1)
             keyboard.send("enter")
+            time.sleep(rd)
 
-            time.sleep(row_delay)
-
-        pyperclip.copy(old_clipboard)
+        pyperclip.copy(oc)
 
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    app = RPBinderPRO(root)
-    root.mainloop()
+    r = tk.Tk()
+    a = app(r)
+    r.mainloop()
